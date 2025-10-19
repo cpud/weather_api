@@ -37,10 +37,8 @@ def update_item(item_id: int, item: Item):
 
 @app.get("/weather")
 def crossing_weather(location = "London,UK"):
-    #key = "P5EQFWDY9YTS8WPZ342EM5DMM"
     load_dotenv()
     key = os.getenv("CROSSING_KEY")
-    #location = "Charlotte, NC"
     date2 = None
     api_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}?key={key}".format(
         location = location, key = key)
@@ -49,10 +47,8 @@ def crossing_weather(location = "London,UK"):
 
 @app.get("/weather/{location}")
 def test(location):
-    #key = "P5EQFWDY9YTS8WPZ342EM5DMM"
     load_dotenv()
     key = os.getenv("CROSSING_KEY")
-    #location = "Charlotte, NC"
     date2 = None
     api_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}?key={key}".format(
         location = location, key = key)
