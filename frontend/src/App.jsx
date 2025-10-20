@@ -1,13 +1,17 @@
-import {useEffect, useState} from 'react';
+import { useState } from 'react';
 import './App.css';
 import axios from 'axios';
 import WeatherCard from './components/WeatherCard';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const baseUrl = "http://127.0.0.1:8000"
 
 function App() {
   const [location, setLocation] = useState("");
-  //const [weather, setWeather] = useState([]);
+  //const [date, setDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(null);
   const [weather, setWeather] = useState({
     tempMin: '',
     tempMax:'',
@@ -17,7 +21,9 @@ function App() {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
-    const data = await axios.get(`${baseUrl}/weather/${location}`);
+    const startDateAPI = startDate.toLocaleDateString('en-CA'); // english Canada
+    const endDateAPI = endDate.toLocaleDateString('en-CA');
+    const data = await axios.get(`${baseUrl}/weather/${location}/${startDateAPI}/${endDateAPI}`);
     const weatherData = data.data
     const use = {
       tempMin: weatherData.days[0].tempmin,
@@ -32,10 +38,15 @@ function App() {
     setLocation(e.target.value);
   }
 
+  const onDateChange = (dates) => {
+    const [start, end] = dates;
+    setStartDate(start);
+    setEndDate(end);
+  }
   return (
     <>
       <div className="App">
-        <section>
+        <div>
           <h3>Enter location</h3>
           <form onSubmit={handleSubmit}>
             <label htmlFor='location'></label>
@@ -47,23 +58,24 @@ function App() {
              value={location}/>
              <button type="submit">Submit</button>
           </form>
+          </div>
+        <div>
+          <h3>Start Date</h3>
+          <DatePicker
+            selected={startDate}
+            onChange={onDateChange}
+            startDate={startDate}
+            endDate={endDate}
+            selectsRange
+            inline  
+          />
+        </div>
+        <div>
           <WeatherCard weather = {weather} />
-        </section>
-        <section>
-        </section>
+        </div>
       </div>
     </>
   )
 }
 
 export default App
-/*
-          <h4>Max temp</h4> 
-            {weather.tempMax}
-          <h4>Min temp</h4>
-            {weather.tempMin}
-          <h4>Conditions</h4>
-            {weather.conditions}
-          <h4>Humidity</h4>
-            {weather.humidity}
-*/
