@@ -43,8 +43,8 @@ def test(location, date1, date2):
     # check if data exists in cache
     cached_data = redis_client.get(cache_key)
     if cached_data:
-        return {"source": "cache", "data": json.loads(cached_data)}
-        #return json.loads(cached_data)
+        #return {"source": "cache", "data": json.loads(cached_data)}
+        return json.loads(cached_data)
     
     
     today = datetime.datetime.today()
