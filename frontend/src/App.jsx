@@ -9,15 +9,16 @@ const baseUrl = "http://127.0.0.1:8000"
 
 function App() {
   const [location, setLocation] = useState("");
-  //const [date, setDate] = useState(new Date());
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(null);
   const [weather, setWeather] = useState({
+    temp: '',
     tempMin: '',
     tempMax:'',
     conditions: '',
     humidity: '',
   });
+  const[daysData, setDaysData] = useState([])
 
   const handleSubmit = async(e) => {
     e.preventDefault();
@@ -25,12 +26,16 @@ function App() {
     const endDateAPI = endDate.toLocaleDateString('en-CA');
     const data = await axios.get(`${baseUrl}/weather/${location}/${startDateAPI}/${endDateAPI}`);
     const weatherData = data.data
+    const daysData = setDaysData(weatherData.days)
     const use = {
+      temp: weatherData.days[0].temp,
       tempMin: weatherData.days[0].tempmin,
       tempMax: weatherData.days[0].tempmax,
       conditions: weatherData.days[0].conditions,
       humidity: weatherData.days[0].humidity,
     }
+    console.log(daysData)
+    console.log(weatherData.days)
     setWeather(use) 
   }
 
@@ -60,7 +65,7 @@ function App() {
           </form>
           </div>
         <div>
-          <h3>Start Date</h3>
+          <h3>Select Dates</h3>
           <DatePicker
             selected={startDate}
             onChange={onDateChange}
@@ -72,6 +77,9 @@ function App() {
         </div>
         <div>
           <WeatherCard weather = {weather} />
+        </div>
+        <div>
+
         </div>
       </div>
     </>

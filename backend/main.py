@@ -1,16 +1,22 @@
 from typing import Union
 import json
 import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import redis
-from pydantic import BaseModel
+import redis.asyncio as redisA
+#from pydantic import BaseModel
 import requests
 from dotenv import load_dotenv
 import os
 
-
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 #redis_client = redis.Redis(host='http://127.0.0.1', port=8000, db = 0)
 #redis_client = redis.Redis(host='localhost', port=6379)
@@ -22,7 +28,7 @@ key = os.getenv("CROSSING_KEY")
 
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST"),
-    port=17306,
+    port=os.getenv("REDIS_PORT"),
     decode_responses=True,
     username=os.getenv("REDIS_USER"),
     password=os.getenv("REDIS_PW"),
@@ -36,8 +42,11 @@ app.add_middleware(
     #allow_headers = ['*'],
 )
 
+
 @app.get("/weather/{location}/{date1}/{date2}")
-def test(location, date1, date2):
+@limiter.limit("5/minute")
+def test(location: str, date1: datetime.date, date2: datetime.date, request: Request):
+#def test():
     cache_key = f"weather:{location}{date1}{date2}"
     
     # check if data exists in cache
