@@ -1,4 +1,3 @@
-from typing import Union
 import json
 import datetime
 from fastapi import FastAPI, Request, HTTPException
@@ -7,8 +6,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import redis
-import redis.asyncio as redisA
-#from pydantic import BaseModel
 import logging
 import requests
 from dotenv import load_dotenv
@@ -45,30 +42,35 @@ app.add_middleware(
 
 
 @app.get("/weather/{location}/{date1}/{date2}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def test(location: str, date1: datetime.date, date2: datetime.date, request: Request):
 #def test():
     cache_key = f"weather:{location}{date1}{date2}"
     
     # check if data exists in cache
-    cached_data = redis_client.get(cache_key)
-    if cached_data:
-        #return {"source": "cache", "data": json.loads(cached_data)}
-        return json.loads(cached_data)
+    try:
+        cached_data = redis_client.get(cache_key)
+        if cached_data:
+            #return {"source": "cache", "data": json.loads(cached_data)}
+            return json.loads(cached_data)
+    except redis.RedisError as redis_error:
+        logging.error(f"Redis error: {redis_error}")
     
     
-    today = datetime.datetime.today()
+    #today = datetime.datetime.today()
     #date1 = str(today).split()[0]
     #date2 = str(today + datetime.timedelta(days=10))
     #date2 = date2.split()[0]
     api_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}/{date1}/{date2}?key={key}".format(
         location = location, date1 = date1, date2 = date2, key = key)
-    r = requests.get(api_url)
-    
-    # store in redis cache with 10 min expiration
-    weather_dict = json.dumps(r.json())
-    redis_client.setex(cache_key, 600, weather_dict)
-    
-    # return weather data
-    #return {"soruce": "api", "data": r.json()}
-    return r.json()
+    try:
+        r = requests.get(api_url)
+        # store in redis cache with 10 min expiration
+        weather_dict = json.dumps(r.json())
+        redis_client.setex(cache_key, 600, weather_dict)
+        
+        # return weather data
+        #return {"soruce": "api", "data": r.json()}
+        return r.json()
+    except:
+        raise HTTPException(status_code=r.status_code, detail=r.text)
